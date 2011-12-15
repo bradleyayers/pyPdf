@@ -304,7 +304,7 @@ class PdfFileWriter(object):
         if hasattr(self, "_encrypt"):
             trailer[NameObject("/Encrypt")] = self._encrypt
         trailer.writeToStream(stream, None)
-        
+
         # eof
         stream.write("\nstartxref\n%s\n%%%%EOF\n" % (xref_location))
 
@@ -451,8 +451,8 @@ class PdfFileReader(object):
         return self.flattenedPages[pageNumber]
 
     ##
-    # Read-only property that accesses the 
-    # {@link #PdfFileReader.getNamedDestinations 
+    # Read-only property that accesses the
+    # {@link #PdfFileReader.getNamedDestinations
     # getNamedDestinations} function.
     # <p>
     # Stability: Added in v1.10, will exist for all future v1.x releases.
@@ -469,7 +469,7 @@ class PdfFileReader(object):
         if retval == None:
             retval = {}
             catalog = self.trailer["/Root"]
-            
+
             # get the name tree
             if catalog.has_key("/Dests"):
                 tree = catalog["/Dests"]
@@ -477,7 +477,7 @@ class PdfFileReader(object):
                 names = catalog['/Names']
                 if names.has_key("/Dests"):
                     tree = names['/Dests']
-        
+
         if tree == None:
             return retval
 
@@ -515,17 +515,17 @@ class PdfFileReader(object):
         if outlines == None:
             outlines = []
             catalog = self.trailer["/Root"]
-            
+
             # get the outline dictionary and named destinations
             if catalog.has_key("/Outlines"):
                 lines = catalog["/Outlines"]
                 if lines.has_key("/First"):
                     node = lines["/First"]
             self._namedDests = self.getNamedDestinations()
-            
+
         if node == None:
           return outlines
-          
+
         # see if there are any more outlines
         while 1:
             outline = self._buildOutline(node)
@@ -549,10 +549,10 @@ class PdfFileReader(object):
         page, typ = array[0:2]
         array = array[2:]
         return Destination(title, page, typ, *array)
-          
+
     def _buildOutline(self, node):
         dest, title, outline = None, None, None
-        
+
         if node.has_key("/A") and node.has_key("/Title"):
             # Action, section 8.5 (only type GoTo supported)
             title  = node["/Title"]
@@ -720,7 +720,7 @@ class PdfFileReader(object):
         while 1:
             # load the xref table
             stream.seek(startxref, 0)
-            x = stream.read(1)
+            x = readNonWhitespace(stream)
             if x == "x":
                 # standard cross-reference table
                 ref = stream.read(4)
@@ -1084,7 +1084,7 @@ class PageObject(DictionaryObject):
 
     def _pushPopGS(contents, pdf):
         # adds a graphics state "push" and "pop" to the beginning and end
-        # of a content stream.  This isolates it from changes such as 
+        # of a content stream.  This isolates it from changes such as
         # transformation matricies.
         stream = ContentStream(contents, pdf)
         stream.operations.insert(0, [[], "q"])
@@ -1635,7 +1635,7 @@ class Destination(DictionaryObject):
         self[NameObject("/Title")] = title
         self[NameObject("/Page")] = page
         self[NameObject("/Type")] = typ
-        
+
         # from table 8.2 of the PDF 1.6 reference.
         if typ == "/XYZ":
             (self[NameObject("/Left")], self[NameObject("/Top")],
@@ -1651,7 +1651,7 @@ class Destination(DictionaryObject):
             pass
         else:
             raise utils.PdfReadError("Unknown Destination Type: %r" % typ)
-          
+
     ##
     # Read-only property accessing the destination title.
     # @return A string.
@@ -1817,24 +1817,24 @@ def _alg35(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encr
     # described in Algorithm 3.2.
     key = _alg32(password, rev, keylen, owner_entry, p_entry, id1_entry)
     # 2. Initialize the MD5 hash function and pass the 32-byte padding string
-    # shown in step 1 of Algorithm 3.2 as input to this function. 
+    # shown in step 1 of Algorithm 3.2 as input to this function.
     m = md5()
     m.update(_encryption_padding)
     # 3. Pass the first element of the file's file identifier array (the value
     # of the ID entry in the document's trailer dictionary; see Table 3.13 on
     # page 73) to the hash function and finish the hash.  (See implementation
-    # note 25 in Appendix H.) 
+    # note 25 in Appendix H.)
     m.update(id1_entry)
     md5_hash = m.digest()
     # 4. Encrypt the 16-byte result of the hash, using an RC4 encryption
-    # function with the encryption key from step 1. 
+    # function with the encryption key from step 1.
     val = utils.RC4_encrypt(key, md5_hash)
     # 5. Do the following 19 times: Take the output from the previous
     # invocation of the RC4 function and pass it as input to a new invocation
     # of the function; use an encryption key generated by taking each byte of
     # the original encryption key (obtained in step 2) and performing an XOR
     # operation between that byte and the single-byte value of the iteration
-    # counter (from 1 to 19). 
+    # counter (from 1 to 19).
     for i in range(1, 20):
         new_key = ''
         for l in range(len(key)):
@@ -1842,7 +1842,7 @@ def _alg35(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encr
         val = utils.RC4_encrypt(new_key, val)
     # 6. Append 16 bytes of arbitrary padding to the output from the final
     # invocation of the RC4 function and store the 32-byte result as the value
-    # of the U entry in the encryption dictionary. 
+    # of the U entry in the encryption dictionary.
     # (implementator note: I don't know what "arbitrary padding" is supposed to
     # mean, so I have used null bytes.  This seems to match a few other
     # people's implementations)
@@ -1867,5 +1867,3 @@ def _alg35(password, rev, keylen, owner_entry, p_entry, id1_entry, metadata_encr
 #
 #    output.addPage(page1)
 #    output.write(file("test\\merge-test.pdf", "wb"))
-
-
